@@ -131,7 +131,10 @@ Claude Code で `/init-project` を実行すると、対話的にプロジェク
 ├── docs/decisions/             # ADR (Architecture Decision Records)
 ├── scripts/hooks/              # Claude Code hook スクリプト
 │   ├── guard.sh                #   安全ガード (PreToolUse)
-│   └── post-tool-format.sh     #   自動フォーマット (PostToolUse)
+│   ├── post-tool-format.sh     #   自動フォーマット (PostToolUse)
+│   └── guards.d/               #   追加ガード（.disabled を外して有効化）
+│       ├── config-protection.sh.disabled
+│       └── review-enforcer.sh.disabled
 ├── src/                        # ソースコード (初期: index.ts)
 ├── tests/                      # テスト (初期: index.test.ts)
 ├── AGENTS.md                   # エージェント共通指示 (全ツール対応)
@@ -154,83 +157,42 @@ Claude Code で `/init-project` を実行すると、対話的にプロジェク
 
 ### 段階的に有効化するガード
 
-問題が起きてから追加すれば十分です。最初から全部入れる必要はありません。
-
-#### Hook 5: 設定ファイル保護
-
-**問題**: エージェントが `biome.json` のルールを緩めたり、`tsconfig.json` の `strict` を外したりする。
-
-`guard.sh` の `exit 0` の直前に以下を追加:
+`scripts/hooks/guards.d/` にプラグインとして同梱されています。**ファイル名から `.disabled` を外すだけで有効化**できます。guard.sh 本体を編集する必要はありません。
 
 ```bash
-# ============================================================
-# Hook 5: 設定ファイル保護
-# ============================================================
-TOOL_NAME=$(echo "$INPUT" | jq -r '.tool_name // ""')
-if [[ "$TOOL_NAME" == "Write" || "$TOOL_NAME" == "Edit" ]]; then
-  FILE_PATH=$(echo "$INPUT" | jq -r '.tool_input.file_path // .tool_input.path // ""')
-  PROTECTED_FILES="biome.json|lefthook.yml|tsconfig.json|\.claude/settings\.json"
-  if echo "$FILE_PATH" | grep -qE "(${PROTECTED_FILES})$"; then
-    echo "❌ 設定ファイル ($(basename "$FILE_PATH")) は保護されています。変更は手動で行ってください。" >&2
-    exit 2
-  fi
-fi
+# 設定ファイル保護を有効化
+mv scripts/hooks/guards.d/config-protection.sh.disabled \
+   scripts/hooks/guards.d/config-protection.sh
+
+# push 前レビュー強制を有効化
+mv scripts/hooks/guards.d/review-enforcer.sh.disabled \
+   scripts/hooks/guards.d/review-enforcer.sh
 ```
 
-#### Hook 6: push 前レビュー強制
+| ファイル | 問題 | 効果 |
+|---------|------|------|
+| `config-protection.sh` | エージェントが biome.json 等のルールを緩める | Write/Edit で設定ファイルの変更をブロック |
+| `review-enforcer.sh` | レビューなしで push してしまう | `/code-review-expert` 実行後のマーカーがないと push をブロック |
 
-**問題**: エージェントがレビューなしで push してしまう。
+#### Stop Hook: テストなし完了防止（手動設定）
 
-`guard.sh` の `exit 0` の直前に以下を追加:
-
-```bash
-# ============================================================
-# Hook 6: code-review-expert 実行強制（マーカーファイル方式）
-# ============================================================
-if has_git_subcmd "$COMMAND" "push"; then
-  HEAD_HASH=$(git -C "$GIT_TARGET_DIR" rev-parse HEAD 2>/dev/null || echo "")
-  if [[ -n "$HEAD_HASH" ]]; then
-    REVIEW_DONE_FILE="$GIT_TARGET_DIR/.code-review-done"
-    if [[ ! -f "$REVIEW_DONE_FILE" ]]; then
-      echo "❌ code-review-expert を実行してください。push 前にレビューが必要です。" >&2
-      exit 2
-    fi
-    REVIEW_HASH=$(tr -d '[:space:]' < "$REVIEW_DONE_FILE" 2>/dev/null || echo "")
-    if [[ "$REVIEW_HASH" != "$HEAD_HASH" ]]; then
-      echo "❌ code-review-expert を実行してください。（コミット後に再レビューが必要です）" >&2
-      exit 2
-    fi
-  fi
-fi
-```
-
-レビュー完了後に `git rev-parse HEAD > .code-review-done` でマーカーを書き込むと、push が許可されます。
-
-#### Stop Hook: テストなし完了防止
-
-**問題**: エージェントがテストを書かずに「完了」と宣言する。
-
-`.claude/settings.json` に以下を追加:
+エージェントがテストを書かずに「完了」と宣言する問題には、`.claude/settings.json` の `hooks` に `Stop` キーを追加します:
 
 ```json
-{
-  "hooks": {
-    "Stop": [
+"Stop": [
+  {
+    "matcher": "",
+    "hooks": [
       {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash -c 'npx vitest run --silent 2>/dev/null || { echo \"❌ テストが失敗しています。修正してから完了してください。\" >&2; exit 2; }'"
-          }
-        ]
+        "type": "command",
+        "command": "bash -c 'npx vitest run --silent 2>/dev/null || { echo \"❌ テストが失敗しています。\" >&2; exit 2; }'"
       }
     ]
   }
-}
+]
 ```
 
-> 既存の `PreToolUse` / `PostToolUse` と同じ `hooks` オブジェクト内に `Stop` キーを追加してください。
+> 既存の `PreToolUse` / `PostToolUse` と同じレベルに追加してください。詳細は [Claude Code Hooks ドキュメント](https://docs.anthropic.com/en/docs/claude-code/hooks) を参照。
 
 <details>
 <summary>設計の原案</summary>

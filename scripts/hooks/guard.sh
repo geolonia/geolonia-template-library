@@ -160,4 +160,13 @@ if has_git_subcmd "$COMMAND" "push"; then
   fi
 fi
 
+# ============================================================
+# Plugin loader: guards.d/*.sh を自動読み込み
+# .disabled 拡張子を外すだけで有効化できる
+# ============================================================
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+for hook in "$SCRIPT_DIR"/guards.d/*.sh; do
+  [ -f "$hook" ] && source "$hook"
+done
+
 exit 0
