@@ -19,13 +19,15 @@ gh repo clone my-project
 cd my-project
 ```
 
-### 方法 3: 既存リポジトリに適用
+### 方法 3: 既存リポジトリに適用（予定）
+
+> **Note**: `npx @geolonia/template apply` は未実装です。実装状況は [#10](https://github.com/geolonia/geolonia-template/issues/10) を参照してください。
 
 ```bash
 npx @geolonia/template apply
 ```
 
-または、AI エージェントが `template-manifest.yaml` を読んで必要なファイルを適用できます。
+現時点では、AI エージェントが `template-manifest.yaml` を読んで必要なファイルを適用できます。
 
 ### カスタマイズ
 
