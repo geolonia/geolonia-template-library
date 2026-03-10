@@ -19,13 +19,15 @@ gh repo clone my-project
 cd my-project
 ```
 
-### 方法 3: 既存リポジトリに適用
+### 方法 3: 既存リポジトリに適用（予定）
+
+> **Note**: `npx @geolonia/template apply` は未実装です。実装状況は [#10](https://github.com/geolonia/geolonia-template/issues/10) を参照してください。
 
 ```bash
 npx @geolonia/template apply
 ```
 
-または、AI エージェントが `template-manifest.yaml` を読んで必要なファイルを適用できます。
+現時点では、AI エージェントが `template-manifest.yaml` を読んで必要なファイルを適用できます。
 
 ### カスタマイズ
 
@@ -102,6 +104,21 @@ pnpm run typecheck && pnpm run lint && pnpm run test && pnpm run build
 | エージェントが biome.json 等のルールを緩めた | 設定ファイル保護 | `guard.sh` に Hook 5 を追加（[コード例](https://github.com/geolonia/multi-agent-shogun/blob/main/scripts/hooks/guard.sh)） |
 | push 前レビューを強制したい | code-review-expert 必須化 | `guard.sh` に Hook 6 を追加 |
 | エージェントがテストなしで完了宣言 | Stop Hook | `.claude/settings.json` に Stop hook を追加 |
+
+## 設計の原案
+
+このテンプレートは以下の情報源をもとに設計しています。
+
+| 情報源 | 取り込んだ機能 |
+|-------|-------------|
+| [Harness Engineering Best Practices 2026](https://nyosegawa.github.io/posts/harness-engineering-best-practices-2026/)（逆瀬川） | 4層品質モデル（PostToolUse → pre-commit → CI → Human review）、PreToolUse による破壊的操作ブロック、PostToolUse による即時フォーマット、設定ファイル保護の考え方、Biome / Lefthook の選定根拠 |
+| [Claude Code Hooks](https://docs.anthropic.com/en/docs/claude-code/hooks) (Anthropic) | `PreToolUse` / `PostToolUse` hook の仕組み、`guard.sh` と `post-tool-format.sh` の実装パターン |
+| [AGENTS.md](https://openai.com/index/introducing-agents-md/) (OpenAI) | エージェント非依存の指示ファイル規約。Claude Code / Codex / Cursor 等どのツールでも読める共通フォーマット |
+| [CLAUDE.md](https://docs.anthropic.com/en/docs/claude-code/memory#claudemd) (Anthropic) | Claude Code 固有の設定・ワークフロー指示ファイル |
+| [ADR (Architecture Decision Records)](https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions) (Michael Nygard) | `docs/decisions/` による設計判断の記録。なぜその技術を選んだかを不変に残す |
+| [Backstage](https://backstage.io/) (Spotify) | `catalog-info.yaml` によるサービスカタログ・メタデータ管理 |
+| [Biome](https://biomejs.dev/) | ESLint + Prettier を統合した高速 Linter / Formatter（[ADR-0001](docs/decisions/0001-use-biome.md)） |
+| [Lefthook](https://github.com/evilmartians/lefthook) (Evil Martians) | Go 製の高速 Git hooks マネージャ。並列実行対応（[ADR-0002](docs/decisions/0002-use-lefthook.md)） |
 
 ## License
 
