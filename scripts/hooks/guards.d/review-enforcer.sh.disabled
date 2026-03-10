@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# review-enforcer — push 前に code-review-expert の実行を強制
+#
+# 有効化: ファイル名から .disabled を外す
+#   mv review-enforcer.sh.disabled review-enforcer.sh
+#
+# WHY: レビューなしで push → CI 失敗 → 手戻りのコストを防ぐ
+#
+# 使い方:
+#   1. /code-review-expert --auto を実行
+#   2. レビュー完了後、自動で .code-review-done にマーカーが書かれる
+#   3. push が許可される
+
+if has_git_subcmd "$COMMAND" "push"; then
+  HEAD_HASH=$(git -C "$GIT_TARGET_DIR" rev-parse HEAD 2>/dev/null || echo "")
+  if [[ -n "$HEAD_HASH" ]]; then
+    REVIEW_DONE_FILE="$GIT_TARGET_DIR/.code-review-done"
+    if [[ ! -f "$REVIEW_DONE_FILE" ]]; then
+      echo "❌ code-review-expert を実行してください。push 前にレビューが必要です。" >&2
+      exit 2
+    fi
+    REVIEW_HASH=$(tr -d '[:space:]' < "$REVIEW_DONE_FILE" 2>/dev/null || echo "")
+    if [[ "$REVIEW_HASH" != "$HEAD_HASH" ]]; then
+      echo "❌ code-review-expert を実行してください。（コミット後に再レビューが必要です）" >&2
+      exit 2
+    fi
+  fi
+fi

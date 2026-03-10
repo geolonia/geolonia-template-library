@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# config-protection — 設定ファイルの改変をブロック
+#
+# 有効化: ファイル名から .disabled を外す
+#   mv config-protection.sh.disabled config-protection.sh
+#
+# WHY: エージェントが biome.json のルールを緩めたり、
+#      tsconfig.json の strict を外したりする事故を防ぐ
+
+TOOL_NAME=$(echo "$INPUT" | jq -r '.tool_name // ""')
+if [[ "$TOOL_NAME" == "Write" || "$TOOL_NAME" == "Edit" ]]; then
+  FILE_PATH=$(echo "$INPUT" | jq -r '.tool_input.file_path // .tool_input.path // ""')
+  PROTECTED_FILES="biome\.json|lefthook\.yml|tsconfig\.json|\.claude/settings\.json"
+  if echo "$FILE_PATH" | grep -qE "(${PROTECTED_FILES})$"; then
+    echo "❌ 設定ファイル ($(basename "$FILE_PATH")) は保護されています。変更は手動で行ってください。" >&2
+    exit 2
+  fi
+fi
