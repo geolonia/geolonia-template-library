@@ -79,16 +79,17 @@ pnpm run typecheck && pnpm run lint && pnpm run test && pnpm run build
 
 ## Claude Code Hooks
 
-`guard.sh` (PreToolUse) が破壊的操作・main 直接 push・設定ファイル改竄をブロック。
-`post-tool-format.sh` (PostToolUse) がファイル書き込み後に自動フォーマット。
-詳細は各スクリプトを参照。
+**初期状態で有効:**
+- `guard.sh` (PreToolUse) — 破壊的操作ブロック、main 直接 push ブロック、push 前 typecheck/lint
+- `post-tool-format.sh` (PostToolUse) — ファイル書き込み後に自動フォーマット
 
-一時的に無効化する場合:
-```bash
-mv .claude/settings.json .claude/settings.json.bak
-# 作業...
-mv .claude/settings.json.bak .claude/settings.json
-```
+**問題が起きたら有効化:**
+
+| 問題 | 対策 | 方法 |
+|------|------|------|
+| エージェントが biome.json 等のルールを緩めた | 設定ファイル保護 | `guard.sh` に Hook 5 を追加（[コード例](https://github.com/geolonia/multi-agent-shogun/blob/main/scripts/hooks/guard.sh)） |
+| push 前レビューを強制したい | code-review-expert 必須化 | `guard.sh` に Hook 6 を追加 |
+| エージェントがテストなしで完了宣言 | Stop Hook | `.claude/settings.json` に Stop hook を追加 |
 
 ## License
 

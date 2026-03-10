@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # guard.sh — Claude Code PreToolUse hook for Bash tool
-# Generic version: Hook 2 (destructive ops), Hook 3 (main branch protection),
-# Hook 4 (push-before-lint/typecheck), Hook 5 (config file protection)
+# Hook 2 (destructive ops), Hook 3 (main branch protection),
+# Hook 4 (push-before-lint/typecheck)
 #
 # Reads JSON from stdin: {"tool_name": "Bash", "tool_input": {"command": "..."}}
 # exit 0 = allow, exit 2 = block (stderr shown as error message)
@@ -158,31 +158,6 @@ if has_git_subcmd "$COMMAND" "push"; then
       fi
     fi
   fi
-fi
-
-# ============================================================
-# Hook 5: 設定ファイル保護
-# WHY: エージェントがlintエラーを修正する代わりに設定を緩めることを防ぐ
-# ============================================================
-FILE_PATH=$(echo "$INPUT" | jq -r '.tool_input.file_path // ""')
-if [[ -n "$FILE_PATH" ]]; then
-  PROTECTED_PATTERNS=(
-    "biome.json"
-    "tsconfig.json"
-    "tsconfig.*.json"
-    "lefthook.yml"
-    ".github/workflows/"
-    "catalog-info.yaml"
-    "CODEOWNERS"
-  )
-  for pattern in "${PROTECTED_PATTERNS[@]}"; do
-    if [[ "$FILE_PATH" == *"$pattern"* ]]; then
-      echo "❌ Configuration file '$FILE_PATH' is protected and cannot be modified by agents." >&2
-      echo "   WHY: Config files define code quality standards. Agent modifications could weaken them." >&2
-      echo "   FIX: Modify this file manually after team review (ADR required for significant changes)." >&2
-      exit 2
-    fi
-  done
 fi
 
 exit 0

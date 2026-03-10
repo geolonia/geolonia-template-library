@@ -15,8 +15,6 @@ pre-commit:
     lint:
       glob: "*.{ts,js}"
       run: npx biome check {staged_files}
-    typecheck:
-      run: npx tsc --noEmit
 
 pre-push:
   commands:
