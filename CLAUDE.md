@@ -4,12 +4,12 @@
 
 ## Hooks
 
-`scripts/hooks/guard.sh` (PreToolUse) and `scripts/hooks/post-tool-format.sh` (PostToolUse) run automatically. They handle destructive operation blocking, branch protection, pre-push checks, config file protection, and auto-formatting. See the scripts for details.
+`scripts/hooks/guard.sh` (PreToolUse) and `scripts/hooks/post-tool-format.sh` (PostToolUse) run automatically. They handle destructive operation blocking, branch protection, pre-push checks, and auto-formatting. See the scripts for details.
 
 ## Workflow
 
 1. Write tests before implementation
-2. Run `/code-review-expert --auto` before every push
+2. Run `/code-review-expert` before pushing non-trivial changes
 
 <!-- TODO: Add project-specific workflow notes -->
 <!-- Examples:
