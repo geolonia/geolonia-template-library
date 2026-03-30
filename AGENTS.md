@@ -31,10 +31,18 @@ pnpm run test:watch   # Vitest watch mode
 <!-- Focus on things that aren't obvious from reading the code -->
 
 ```text
-src/        # Source code
-tests/      # Tests (mirrors src/ structure)
-dist/       # Compiled output (git-ignored)
-docs/decisions/  # Architecture Decision Records
+src/                  # Source code
+tests/                # Tests (mirrors src/ structure)
+dist/                 # Compiled output (git-ignored)
+docs/01_contract/     # Specs, proposals, business plans
+docs/02_estimate/     # Estimates (effort & cost)
+docs/03_work/         # Working dir (design docs, research)
+docs/04_meetings/     # Meeting materials & minutes
+docs/05_reference/    # Reference materials from client
+docs/06_deliverables/ # Deliverables (final outputs)
+docs/decisions/       # Architecture Decision Records
+docs/skills/          # Skill usage documentation
+docs/templates/       # Templates (minutes, reports)
 ```
 
 ## Conventions
